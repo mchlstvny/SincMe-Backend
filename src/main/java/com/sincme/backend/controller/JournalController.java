@@ -28,7 +28,7 @@ public class JournalController {
         String token = authHeader.substring("Bearer ".length());
         Long userId = jwtUtil.extractUserId(token);
 
-        // Ubah string date → LocalDate
+        // Ubah string date -> LocalDate
         LocalDate date = LocalDate.parse(dateStr);
 
         return journalService.getJournalByDate(userId, date)
