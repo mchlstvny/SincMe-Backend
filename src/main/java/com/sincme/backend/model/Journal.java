@@ -1,11 +1,23 @@
 package com.sincme.backend.model;
 
-import jakarta.persistence.*;
-import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-// import com.sincme.backend.dto.JournalResponse.JournalResponseBuilder;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "journal")
@@ -53,11 +65,6 @@ public class Journal {
     public enum Mood {
         SANGAT_BURUK, BURUK, NETRAL, BAIK, SANGAT_BAIK
     }
-
-    // public static JournalResponseBuilder builder() {
-    //     // TODO Auto-generated method stub
-    //     throw new UnsupportedOperationException("Unimplemented method 'builder'");
-    // }
 }
 
 

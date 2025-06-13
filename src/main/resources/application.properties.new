@@ -15,7 +15,6 @@ spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
 
 # JWT Configuration
 jwt.secret=5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437
-jwt.expiration=86400000
 
 # Gemini API Key
-gemini.api-key=${GEMINI_API_KEY}
+gemini.api.key=AIzaSyAvH82hsCTtluoerIzJyVUgaXw9PIGcovw
