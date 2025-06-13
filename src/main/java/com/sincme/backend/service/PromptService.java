@@ -30,7 +30,7 @@ public class PromptService {
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    @Value("${gemini.api.key}")
+    @Value("${GEMINI_API_KEY}")
     private String geminiApiKey;
 
     // Ambil list chatroom user
