@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
+
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -61,6 +62,22 @@ public class AuthController {
 
         return ResponseEntity.ok(token);
     }
+    
+    // Logout endpoint
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        return ResponseEntity.status(401).body("Unauthorized: No token provided");
+    }
+
+    String token = authHeader.substring("Bearer ".length());
+
+    // Optional: logging
+    System.out.println("User logout. Token: " + token);
+
+    return ResponseEntity.ok("Logout successful");
+}
+
 
     // Guest token (optional testing)
     @GetMapping("/guest-token")
