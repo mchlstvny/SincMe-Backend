@@ -1,14 +1,21 @@
 package com.sincme.backend.controller;
 
-import com.sincme.backend.dto.UserLikeQuotesDto;
-import com.sincme.backend.service.UserLikeQuotesService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.sincme.backend.dto.UserLikeQuotesDto;
+import com.sincme.backend.service.UserLikeQuotesService;
+
 @RestController
-@RequestMapping("/user-like-quotes")
+@RequestMapping("/api/user-like-quotes")
 public class UserLikeQuotesController {
 
     private final UserLikeQuotesService service;
