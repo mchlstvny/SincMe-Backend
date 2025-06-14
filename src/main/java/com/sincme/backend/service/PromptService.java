@@ -71,7 +71,15 @@ public class PromptService {
         List<Map<String, Object>> history = getHistory(chatRoom);
 
         // Prompt Engineering -> safe space prompt
-        String instructions = "Kamu adalah teman yang suportif, ramah, dan penuh empati di ruang aman untuk kesehatan mental. Jangan menghakimi, jangan memberikan diagnosis medis. Jawablah dengan bahasa yang lembut, penuh pengertian, dan memberikan dukungan emosional. Bantu user merasa lebih baik dan diterima. Jangan pernah memaksa user untuk menceritakan hal yang tidak nyaman. Hindari penggunaan format berlebihan (bold, italic, newline), jawab dengan kalimat natural yang mudah dimengerti.";
+        String instructions = """
+        Kamu adalah teman ngobrol virtual yang suportif dan ramah di ruang aman untuk berbagi perasaan dan pengalaman hidup.
+        Tugasmu adalah mendengarkan, memahami, dan membantu user untuk berkembang secara pribadi (self-growth).
+        Jika user menceritakan stres, kecemasan, atau tantangan hidup, berikan dukungan emosional dan semangat
+        dengan cara yang empatik dan positif. Jangan memberikan diagnosis atau solusi medis.
+        Jawabanmu harus netral, empatik, dan fokus pada pengembangan diri serta semangat hidup.
+        Jangan menyuruh user melakukan hal berisiko, dan jangan menilai.
+        Jawaban kamu tidak boleh terlalu panjang. Berikan jawaban yang singkat, jelas, dan empatik. Maksimal 5 kalimat.
+        """;
 
         // Build contents
         List<Map<String, Object>> contents = new ArrayList<>();
@@ -96,7 +104,7 @@ public class PromptService {
                         "temperature", 0.7,
                         "topK", 1,
                         "topP", 1,
-                        "maxOutputTokens", 128
+                        "maxOutputTokens", 256
                 ),
                 "safetySettings", List.of(
                         Map.of("category", "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold", "BLOCK_MEDIUM_AND_ABOVE"),
@@ -149,11 +157,25 @@ public class PromptService {
     public String generateRoomName(AIChatRoom chatRoom) throws JsonProcessingException {
         int nameLimit = 255;
 
+        // Ambil history → untuk konteks
         List<Map<String, Object>> history = getHistory(chatRoom);
 
-        String prompt = "Berikan saya nama chat room yang cocok berdasarkan percakapan di atas. Nama harus singkat, ramah, dan relevan dengan isi percakapan. Maksimal " + nameLimit + " karakter. Jangan berikan teks tambahan selain nama.";
-        String instructions = "Kamu adalah asisten yang membantu membuat nama chat room berdasarkan percakapan. Berikan HANYA nama chat room saja, tanpa penjelasan tambahan, tanpa format aneh.";
+        // Prompt untuk AI
+        String prompt = """
+        Berdasarkan percakapan di atas, berikan satu nama singkat untuk chat room ini. 
+        Nama harus terdengar alami dan menyenangkan, seperti nama ruang diskusi. 
+        Gunakan **spasi antar kata**. Tidak boleh menggunakan camelCase, snake_case, atau tanda baca.
+        """;
 
+
+        String instructions = """
+        Tugasmu adalah membuat nama chat room yang mewakili isi percakapan. 
+        Jawaban hanya boleh berupa satu nama. Gunakan **spasi antar kata**, bukan camelCase atau format lain. 
+        Jangan gunakan tanda baca, simbol, atau penjelasan tambahan.
+        """;
+
+
+        // Siapkan contents
         List<Map<String, Object>> contents = new ArrayList<>();
 
         contents.add(Map.of(
@@ -168,6 +190,7 @@ public class PromptService {
                 "parts", List.of(Map.of("text", prompt))
         ));
 
+        // Build request body
         Map<String, Object> data = Map.of(
                 "model", "gemini-1.5-flash",
                 "contents", contents,
@@ -175,13 +198,13 @@ public class PromptService {
                         "temperature", 0.7,
                         "topK", 1,
                         "topP", 1,
-                        "maxOutputTokens", 256
+                        "maxOutputTokens", 128
                 ),
                 "safetySettings", List.of(
-                        Map.of("category", "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold", "BLOCK_MEDIUM_AND_ABOVE"),
-                        Map.of("category", "HARM_CATEGORY_HATE_SPEECH", "threshold", "BLOCK_MEDIUM_AND_ABOVE"),
-                        Map.of("category", "HARM_CATEGORY_HARASSMENT", "threshold", "BLOCK_MEDIUM_AND_ABOVE"),
-                        Map.of("category", "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold", "BLOCK_MEDIUM_AND_ABOVE")
+                        Map.of("category", "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold", "BLOCK_ONLY_HIGH"),
+                        Map.of("category", "HARM_CATEGORY_HATE_SPEECH", "threshold", "BLOCK_ONLY_HIGH"),
+                        Map.of("category", "HARM_CATEGORY_HARASSMENT", "threshold", "BLOCK_ONLY_HIGH"),
+                        Map.of("category", "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold", "BLOCK_ONLY_HIGH")
                 )
         );
 
@@ -204,10 +227,14 @@ public class PromptService {
             String responseBody = response.body();
             String content = extractContentFromGeminiResponse(responseBody);
 
+            // Bersihkan hasil dari newline & trim spasi
+            content = content.replace("\\n", "").trim();
+
             if (content.length() > nameLimit) {
                 content = content.substring(0, nameLimit);
             }
 
+            // Simpan ke database
             chatRoom.setJudulChat(content);
             chatRoom.setEditedAt(LocalDate.now());
             aiChatRoomRepository.save(chatRoom);
