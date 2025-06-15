@@ -34,4 +34,8 @@ public class QuotesService {
     public Quotes save(String content) {
         return quotesRepository.save(new Quotes(content));
     }
+
+    public Quotes save(String content, String author) {
+        return quotesRepository.save(new Quotes(content, author));
+    }
 }

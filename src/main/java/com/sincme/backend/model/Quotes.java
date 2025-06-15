@@ -19,10 +19,19 @@ public class Quotes {
     @Column(nullable = false)
     private String content;
 
+    @Column
+    private String author;
+
     public Quotes() {}
 
     public Quotes(String content) {
         this.content = content;
+        this.author = "Anonymous";
+    }
+
+    public Quotes(String content, String author) {
+        this.content = content;
+        this.author = author;
     }
 
     public Long getIdQuotes() {
@@ -35,5 +44,13 @@ public class Quotes {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(String author) {
+        this.author = author;
     }
 }
