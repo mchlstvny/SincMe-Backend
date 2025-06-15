@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import com.sincme.backend.dto.UserLikeQuotesDto;
+import com.sincme.backend.dto.UserLikedQuoteDto;
 import com.sincme.backend.model.Quotes;
 import com.sincme.backend.model.User;
 import com.sincme.backend.model.UserLikeQuotes;
@@ -21,13 +21,11 @@ public class UserLikeQuotesService {
     public UserLikeQuotesService(UserLikeQuotesRepository userLikeQuotesRepo, QuotesRepository quotesRepo) {
         this.userLikeQuotesRepo = userLikeQuotesRepo;
         this.quotesRepo = quotesRepo;
-    }
-
-    public boolean likeQuotes(UserLikeQuotesDto dto) {
+    }    public boolean likeQuotes(Long userId, Long quotesId) {
         User user = new User();
-        user.setId(dto.getUserId());
+        user.setId(userId);
 
-        Quotes quotes = quotesRepo.findById(dto.getIdQuotes())
+        Quotes quotes = quotesRepo.findById(quotesId)
                 .orElseThrow(() -> new EntityNotFoundException("Quotes not found"));
 
         boolean alreadyLiked = userLikeQuotesRepo.findByUserAndQuotes(user, quotes).isPresent();
@@ -37,11 +35,11 @@ public class UserLikeQuotesService {
         return true;
     }
 
-    public boolean unlikeQuotes(UserLikeQuotesDto dto) {
+    public boolean unlikeQuotes(Long userId, Long quotesId) {
         User user = new User();
-        user.setId(dto.getUserId());
+        user.setId(userId);
 
-        Quotes quotes = quotesRepo.findById(dto.getIdQuotes())
+        Quotes quotes = quotesRepo.findById(quotesId)
                 .orElseThrow(() -> new EntityNotFoundException("Quotes not found"));
 
         return userLikeQuotesRepo.findByUserAndQuotes(user, quotes)
@@ -49,14 +47,12 @@ public class UserLikeQuotesService {
                     userLikeQuotesRepo.delete(existing);
                     return true;
                 }).orElse(false);
-    }
-
-    public List<Long> getLikedQuotesIds(Long userId) {
+    }    public List<UserLikedQuoteDto> getLikedQuotes(Long userId) {
         User user = new User();
         user.setId(userId);
 
         return userLikeQuotesRepo.findByUser(user).stream()
-                .map(lq -> lq.getQuotes().getIdQuotes())
+                .map(UserLikedQuoteDto::new)
                 .toList();
     }
 }

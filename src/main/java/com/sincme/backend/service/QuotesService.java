@@ -21,10 +21,13 @@ public class QuotesService {
         return quotesRepository.findAll().stream()
                 .map(QuotesDto::new)
                 .collect(Collectors.toList());
+    }    public QuotesDto getRandomQuote() {
+        Quotes quote = quotesRepository.findRandomQuote();
+        return quote != null ? new QuotesDto(quote) : null;
     }
 
-    public QuotesDto getRandomQuote() {
-        Quotes quote = quotesRepository.findRandomQuote();
+    public QuotesDto getQuoteOfTheDay() {
+        Quotes quote = quotesRepository.findQuoteOfTheDay();
         return quote != null ? new QuotesDto(quote) : null;
     }
 
