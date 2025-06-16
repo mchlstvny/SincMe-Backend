@@ -3,6 +3,7 @@ package com.sincme.backend.service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.sincme.backend.dto.QuotesDto;
@@ -28,7 +29,9 @@ public class QuotesService {
         return quote != null ? new QuotesDto(quote) : null;
     }
 
-    public Quotes save(String content) {
-        return quotesRepository.save(new Quotes(content));
+    @Cacheable(value = "quoteOfTheDay", key = "'quote-' + T(java.time.LocalDate).now().toString()")
+    public QuotesDto getQuoteOfTheDay() {
+        Quotes quote = quotesRepository.findQuoteOfTheDay();
+        return quote != null ? new QuotesDto(quote) : null;
     }
 }
