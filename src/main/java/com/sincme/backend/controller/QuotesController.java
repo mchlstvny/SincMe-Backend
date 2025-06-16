@@ -23,7 +23,9 @@ public class QuotesController {
     @GetMapping
     public ResponseEntity<List<QuotesDto>> getAllQuotes() {
         return ResponseEntity.ok(quotesService.getAllQuotes());
-    }    @GetMapping("/random")
+    }
+    
+    @GetMapping("/random")
     public ResponseEntity<QuotesDto> getRandomQuote() {
         QuotesDto quote = quotesService.getRandomQuote();
         return quote != null ? ResponseEntity.ok(quote) : ResponseEntity.notFound().build();

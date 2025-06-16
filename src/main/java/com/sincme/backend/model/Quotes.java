@@ -1,10 +1,15 @@
 package com.sincme.backend.model;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
@@ -14,13 +19,14 @@ public class Quotes {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_quotes")
-    private Long idQuotes;
-
-    @Column(nullable = false)
+    private Long idQuotes;    @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    @Column
+    @Column(nullable = false)
     private String author;
+
+    @OneToMany(mappedBy = "quotes", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UserLikeQuotes> likes = new HashSet<>();
 
     public Quotes() {}
 
