@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/journal") // pakai prefix /api/journal biar konsisten
@@ -18,23 +19,34 @@ public class JournalController {
     private final JournalService journalService;
     private final JwtUtil jwtUtil;
 
+    // GET /api/journal/all
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllUserJournals(
+            @RequestHeader("Authorization") String authHeader
+    ) {
+        String token = authHeader.substring("Bearer ".length());
+        Long userId = jwtUtil.extractUserId(token);
+
+        return ResponseEntity.ok(journalService.getAllJournalsByUser(userId));
+    }
+
+
     // GET /api/journal?date=YYYY-MM-DD
     @GetMapping
     public ResponseEntity<?> getJournal(
             @RequestParam("date") String dateStr,
             @RequestHeader("Authorization") String authHeader
     ) {
-        // Ambil token dari header Authorization
         String token = authHeader.substring("Bearer ".length());
         Long userId = jwtUtil.extractUserId(token);
 
-        // Ubah string date -> LocalDate
         LocalDate date = LocalDate.parse(dateStr);
 
-        return journalService.getJournalByDate(userId, date)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        List<JournalResponse> journals = journalService.getJournalByDate(userId, date);
+
+        return ResponseEntity.ok(journals);
     }
+
 
     // POST /api/journal
     @PostMapping

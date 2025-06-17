@@ -14,7 +14,7 @@ public class WebConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**") // boleh akses semua endpoint
-                        .allowedOrigins("http://127.0.0.1:5502") // alamat frontend kamu
+                        .allowedOrigins("http://127.0.0.1:5503") // alamat frontend kamu
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);

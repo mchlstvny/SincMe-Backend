@@ -39,10 +39,11 @@ public class JournalService {
     }
 
     // READ Journal by date
-    public Optional<JournalResponse> getJournalByDate(Long userId, LocalDate date) {
-        return journalRepository.findByUserIdAndDate(userId, date)
-                .map(this::toResponse);
-    }
+    public List<JournalResponse> getJournalByDate(Long userId, LocalDate date) {
+    List<Journal> journals = journalRepository.findAllByUserIdAndDate(userId, date);
+    return journals.stream().map(this::toResponse).toList();
+}
+
 
 
     // UPDATE Journal
@@ -110,6 +111,7 @@ public class JournalService {
 
         return JournalResponse.builder()
                 .id(journal.getId())
+                .userId(journal.getUserId())
                 .date(journal.getDate())
                 .title(journal.getTitle())
                 .content(journal.getContent())
@@ -123,5 +125,12 @@ public class JournalService {
         throw new RuntimeException("Failed to deserialize tags", e);
     }
 
+    }
+
+    public List<JournalResponse> getAllJournalsByUser(Long userId) {
+    List<Journal> journals = journalRepository.findAllByUserId(userId);
+    return journals.stream()
+            .map(this::toResponse)
+            .toList();
     }
 }
