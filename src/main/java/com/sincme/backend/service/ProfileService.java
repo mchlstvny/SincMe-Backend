@@ -42,10 +42,15 @@ public class ProfileService {
         return ProfileDTO.fromEntity(profileRepository.save(profile));
     }    @Transactional
     public ProfileDTO getProfile(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+        
         return profileRepository.findByUser_Id(userId)
             .map(ProfileDTO::fromEntity)
-            .orElseGet(() -> createDefaultProfile(userId));
-    }    @Transactional
+            .orElseGet(() -> createDefaultProfile(user));
+    }    
+    
+    @Transactional
     public ProfileDTO updateProfile(Long userId, ProfileDTO request) {
         Profile profile = profileRepository.findByUser_Id(userId)
             .orElseGet(() -> {
@@ -82,16 +87,11 @@ public class ProfileService {
         }
 
         return ProfileDTO.fromEntity(profileRepository.save(profile));
-    }
-
-    private ProfileDTO createDefaultProfile(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
+    }    private ProfileDTO createDefaultProfile(User user) {
         // Create profile with default values
         Profile profile = Profile.builder()
             .user(user)
-            .name("Username")  // Default name
+            .name(user.getFirstName() + " " + user.getLastName())  // Use user's name
             .status(Profile.Status.TENANG)  // Default status
             .build();
 
@@ -114,12 +114,13 @@ public class ProfileService {
         Profile profile = profileRepository.findByUser_Id(userId)
             .orElseThrow(() -> new RuntimeException("Profile not found"));
         profileRepository.delete(profile);
-    }
-
-    @Transactional
+    }    @Transactional
     public ProfileDTO ensureProfileExists(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+                
         return profileRepository.findByUser_Id(userId)
             .map(ProfileDTO::fromEntity)
-            .orElseGet(() -> createDefaultProfile(userId));
+            .orElseGet(() -> createDefaultProfile(user));
     }
 }
