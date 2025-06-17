@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.sincme.backend.dto.CommunityPostDTO;
 import com.sincme.backend.model.CommunityPost;
 import com.sincme.backend.model.PostLike;
+import com.sincme.backend.model.PostNotification;
 import com.sincme.backend.model.PostReaction;
 import com.sincme.backend.model.PostReport;
 import com.sincme.backend.model.PostSave;
@@ -34,10 +35,16 @@ public class CommunityPostService {
     private final PostReportRepository reportRepository;
     private final PostLikeRepository likeRepository;
     private final UserRepository userRepository;
+    private final PostNotificationService notificationService;
 
     private User validateAndGetUser(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException(ERROR_USER_NOT_FOUND));
+    }
+
+    private CommunityPost validateAndGetPost(Long postId) {
+        return postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException(ERROR_POST_NOT_FOUND));
     }
 
     @Transactional
@@ -65,9 +72,8 @@ public class CommunityPostService {
     @Transactional
     public CommunityPostDTO toggleReaction(Long userId, Long postId, CommunityPost.ReactionType reactionType) {
         User user = validateAndGetUser(userId);
-        CommunityPost post = postRepository.findVisiblePost(postId, userId)
-                .orElseThrow(() -> new RuntimeException(ERROR_POST_NOT_FOUND));
-
+        CommunityPost post = validateAndGetPost(postId);
+        
         PostReaction existingReaction = reactionRepository.findByPostIdAndUserId(postId, userId);
         
         if (existingReaction != null) {
@@ -76,17 +82,35 @@ public class CommunityPostService {
             } else {
                 existingReaction.setReactionType(reactionType);
                 reactionRepository.save(existingReaction);
+                
+                // Create notification for updated reaction
+                notificationService.createNotification(
+                    post.getUser().getId(),
+                    userId,
+                    postId,
+                    PostNotification.NotificationType.REACTION,
+                    reactionType.toString()
+                );
             }
         } else {
-            PostReaction reaction = PostReaction.builder()
-                    .post(post)
-                    .user(user)
-                    .reactionType(reactionType)
-                    .build();
-            reactionRepository.save(reaction);
+            PostReaction newReaction = PostReaction.builder()
+                .post(post)
+                .user(user)
+                .reactionType(reactionType)
+                .build();
+            reactionRepository.save(newReaction);
+            
+            // Create notification for new reaction
+            notificationService.createNotification(
+                post.getUser().getId(),
+                userId,
+                postId,
+                PostNotification.NotificationType.REACTION,
+                reactionType.toString()
+            );
         }
-
-        return convertToDTO(post, userId);
+        
+        return convertToDTO(postRepository.findById(postId).orElseThrow(), userId);
     }
 
     @Transactional
@@ -107,6 +131,14 @@ public class CommunityPostService {
                     .build();
             likeRepository.save(like);
             post.setLikeCount(post.getLikeCount() + 1);
+            // Create notification for the new like
+            notificationService.createNotification(
+                post.getUser().getId(), // recipient (post owner)
+                userId, // actor (who liked)
+                postId,
+                PostNotification.NotificationType.LIKE,
+                null
+            );
         }
 
         return convertToDTO(postRepository.save(post), userId);
@@ -155,6 +187,9 @@ public class CommunityPostService {
         if (!post.getUser().getId().equals(userId)) {
             throw new RuntimeException(ERROR_NOT_POST_OWNER);
         }
+
+        // Delete all notifications for this post
+        notificationService.deleteNotificationsForPost(postId);
 
         reactionRepository.deleteByPostId(postId);
         likeRepository.deleteByPostId(postId);
