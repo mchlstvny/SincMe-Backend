@@ -51,8 +51,9 @@ public class MoodService {
     }
 
     // ambil 4 mood terakhir untuk tampilin di Riwayat Mood
-    public List<Mood> getMoodHistory(Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
-        return moodRepository.findTop4ByUserOrderByMoodDateDesc(user);
+        public List<Mood> getMoodHistory(Long userId, int limit) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+        return moodRepository.findRecentByUser(user, limit);
     }
 }

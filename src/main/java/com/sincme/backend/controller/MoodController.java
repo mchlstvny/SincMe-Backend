@@ -75,10 +75,11 @@ public class MoodController {
 
     // ambil 4 mood terakhir untuk Riwayat Mood
     @GetMapping("/history")
-    public List<Mood> getMoodHistory(@RequestHeader("Authorization") String authHeader) {
-        String token = authHeader.substring("Bearer ".length());
-        Long userId = jwtUtil.extractUserId(token);
+    public List<Mood> getMoodHistory(@RequestHeader("Authorization") String authHeader,
+                                 @RequestParam(value = "limit", defaultValue = "4") int limit) {
+    String token = authHeader.substring("Bearer ".length());
+    Long userId = jwtUtil.extractUserId(token);
 
-        return moodService.getMoodHistory(userId);
+    return moodService.getMoodHistory(userId, limit);
     }
 }
