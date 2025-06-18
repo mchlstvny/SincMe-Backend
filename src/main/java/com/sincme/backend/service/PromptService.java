@@ -317,4 +317,58 @@ public class PromptService {
             return "Maaf, AI tidak dapat memberikan jawaban saat ini.";
         }
     }
+
+    // SINGLE CHATROOM
+    // Untuk chat instan tanpa menyimpan apa pun ke database
+    public String generateSingleResponse(String prompt) throws JsonProcessingException {
+    String instructions = """
+    Kamu adalah teman ngobrol virtual yang suportif dan ramah di ruang aman untuk berbagi perasaan dan pengalaman hidup.
+    Tugasmu adalah mendengarkan, memahami, dan membantu user untuk berkembang secara pribadi (self-growth).
+    Jika user menceritakan stres, kecemasan, atau tantangan hidup, berikan dukungan emosional dan semangat
+    dengan cara yang empatik dan positif. Jangan memberikan diagnosis atau solusi medis.
+    Jawaban kamu harus netral, empatik, dan fokus pada pengembangan diri serta semangat hidup.
+    Jangan menyuruh user melakukan hal berisiko, dan jangan menilai.
+    Jawaban kamu tidak boleh terlalu panjang. Berikan jawaban yang singkat, jelas, dan empatik. Maksimal 5 kalimat.
+    """;
+
+    List<Map<String, Object>> contents = List.of(
+        Map.of("role", "user", "parts", List.of(Map.of("text", instructions))),
+        Map.of("role", "user", "parts", List.of(Map.of("text", prompt)))
+    );
+
+    Map<String, Object> data = Map.of(
+        "model", "gemini-1.5-flash",
+        "contents", contents,
+        "generationConfig", Map.of(
+            "temperature", 0.7,
+            "topK", 1,
+            "topP", 1,
+            "maxOutputTokens", 256
+        ),
+        "safetySettings", List.of(
+            Map.of("category", "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold", "BLOCK_MEDIUM_AND_ABOVE"),
+            Map.of("category", "HARM_CATEGORY_HATE_SPEECH", "threshold", "BLOCK_MEDIUM_AND_ABOVE"),
+            Map.of("category", "HARM_CATEGORY_HARASSMENT", "threshold", "BLOCK_MEDIUM_AND_ABOVE"),
+            Map.of("category", "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold", "BLOCK_MEDIUM_AND_ABOVE")
+        )
+    );
+
+    String jsonBody = mapper.writeValueAsString(data);
+
+    HttpRequest request = HttpRequest.newBuilder()
+        .uri(URI.create(getGeminiLink()))
+        .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
+        .header("Content-Type", "application/json")
+        .build();
+
+    try {
+        HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        return extractContentFromGeminiResponse(response.body());
+    } catch (IOException | InterruptedException e) {
+        e.printStackTrace();
+        return "Maaf, terjadi kesalahan saat menghubungi AI.";
+    }
+}
+
+
 }

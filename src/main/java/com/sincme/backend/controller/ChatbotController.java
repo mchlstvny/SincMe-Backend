@@ -3,6 +3,7 @@ package com.sincme.backend.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.sincme.backend.dto.ChatRequest;
 import com.sincme.backend.dto.ChatResponse;
+import com.sincme.backend.dto.ChatSingleRequest;
 import com.sincme.backend.model.AIChatRoom;
 import com.sincme.backend.model.User;
 import com.sincme.backend.repository.UserRepository;
@@ -119,4 +120,44 @@ public class ChatbotController {
         String token = authHeader.substring("Bearer ".length());
         return jwtUtil.extractUserId(token);
     }
+
+    @PostMapping("/single")
+public ResponseEntity<?> chatSingle(
+    @RequestBody ChatSingleRequest request,
+    @RequestHeader("Authorization") String authHeader) {
+
+    try {
+        System.out.println("📥 Masuk ke /api/chat/single");
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            System.out.println("❌ Header token tidak ditemukan");
+            return ResponseEntity.status(401).body("Unauthorized");
+        }
+
+        String token = authHeader.substring(7);
+        Long userId = jwtUtil.extractUserId(token);
+        System.out.println("✅ Token berhasil diambil, userId: " + userId);
+
+        if (userId == null) {
+            System.out.println("❌ User ID null dari token");
+            return ResponseEntity.status(403).body("Invalid Token");
+        }
+
+        String message = request.getMessage();
+        System.out.println("📝 Message: " + message);
+
+        String reply = promptService.generateSingleResponse(message);
+        System.out.println("✅ Reply dari Gemini: " + reply);
+
+        return ResponseEntity.ok(Map.of("reply", reply));
+
+    } catch (Exception e) {
+        System.out.println("🔥 Terjadi error di /api/chat/single");
+        e.printStackTrace();
+        return ResponseEntity.status(500).body("Gagal memproses permintaan.");
+    }
 }
+
+
+}
+
