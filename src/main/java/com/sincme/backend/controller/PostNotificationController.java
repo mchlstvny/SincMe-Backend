@@ -25,6 +25,8 @@ public class PostNotificationController {
     
     private static final String MESSAGE_KEY = "message";
     private static final String ERROR_UNAUTHORIZED = "Unauthorized access";
+    private static final String SUCCESS_READ = "Notification marked as read";
+    private static final String SUCCESS_ALL_READ = "All notifications marked as read";
     
     private final PostNotificationService notificationService;
     private final TokenUtil tokenUtil;
@@ -34,7 +36,10 @@ public class PostNotificationController {
                 .body(Map.of(MESSAGE_KEY, ERROR_UNAUTHORIZED));
     }
 
-    @GetMapping
+    private ResponseEntity<Object> handleException(Exception e) {
+        return ResponseEntity.badRequest()
+                .body(Map.of(MESSAGE_KEY, e.getMessage()));
+    }    @GetMapping
     public ResponseEntity<Object> getNotifications(HttpServletRequest request) {
         try {
             Long userId = tokenUtil.getUserIdFromToken(request);
@@ -45,12 +50,9 @@ public class PostNotificationController {
             List<PostNotificationDTO> notifications = notificationService.getNotifications(userId);
             return ResponseEntity.ok(notifications);
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of(MESSAGE_KEY, e.getMessage()));
+            return handleException(e);
         }
-    }
-
-    @GetMapping("/unread")
+    }    @GetMapping("/unread")
     public ResponseEntity<Object> getUnreadNotifications(HttpServletRequest request) {
         try {
             Long userId = tokenUtil.getUserIdFromToken(request);
@@ -61,8 +63,7 @@ public class PostNotificationController {
             List<PostNotificationDTO> notifications = notificationService.getUnreadNotifications(userId);
             return ResponseEntity.ok(notifications);
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of(MESSAGE_KEY, e.getMessage()));
+            return handleException(e);
         }
     }
 
@@ -77,8 +78,7 @@ public class PostNotificationController {
             long count = notificationService.getUnreadCount(userId);
             return ResponseEntity.ok(Map.of("count", count));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of(MESSAGE_KEY, e.getMessage()));
+            return handleException(e);
         }
     }
 
@@ -90,10 +90,8 @@ public class PostNotificationController {
             Long userId = tokenUtil.getUserIdFromToken(request);
             if (userId == null) {
                 return unauthorized();
-            }
-
-            notificationService.markAsRead(userId, notificationId);
-            return ResponseEntity.ok(Map.of(MESSAGE_KEY, "Notification marked as read"));
+            }            notificationService.markAsRead(userId, notificationId);
+            return ResponseEntity.ok(Map.of(MESSAGE_KEY, SUCCESS_READ));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(Map.of(MESSAGE_KEY, e.getMessage()));
@@ -106,10 +104,8 @@ public class PostNotificationController {
             Long userId = tokenUtil.getUserIdFromToken(request);
             if (userId == null) {
                 return unauthorized();
-            }
-
-            notificationService.markAllAsRead(userId);
-            return ResponseEntity.ok(Map.of(MESSAGE_KEY, "All notifications marked as read"));
+            }            notificationService.markAllAsRead(userId);
+            return ResponseEntity.ok(Map.of(MESSAGE_KEY, SUCCESS_ALL_READ));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(Map.of(MESSAGE_KEY, e.getMessage()));

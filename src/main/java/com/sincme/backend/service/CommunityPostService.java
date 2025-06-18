@@ -28,23 +28,21 @@ public class CommunityPostService {
     private static final String ERROR_ALREADY_REPORTED = "You have already reported this post";
     private static final String ERROR_USER_NOT_FOUND = "User not found";
     private static final String ERROR_NOT_POST_OWNER = "You can only delete your own posts";
-    
-    private final CommunityPostRepository postRepository;
+      private final CommunityPostRepository postRepository;
     private final PostReactionRepository reactionRepository;
     private final PostSaveRepository saveRepository;
     private final PostReportRepository reportRepository;
     private final PostLikeRepository likeRepository;
     private final UserRepository userRepository;
     private final PostNotificationService notificationService;
-
-    private User validateAndGetUser(Long userId) {
-        return userRepository.findById(userId)
+    private final ProfileService profileService;private User validateAndGetUser(Long userId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException(ERROR_USER_NOT_FOUND));
-    }
-
-    private CommunityPost validateAndGetPost(Long postId) {
-        return postRepository.findById(postId)
-                .orElseThrow(() -> new RuntimeException(ERROR_POST_NOT_FOUND));
+        
+        // Always ensure a profile exists before any community post interactions
+        profileService.ensureProfileExists(userId);
+        
+        return user;
     }
 
     @Transactional
@@ -75,42 +73,46 @@ public class CommunityPostService {
         CommunityPost post = validateAndGetPost(postId);
         
         PostReaction existingReaction = reactionRepository.findByPostIdAndUserId(postId, userId);
+        boolean shouldNotify = false;
         
         if (existingReaction != null) {
             if (existingReaction.getReactionType() == reactionType) {
+                // If same reaction, remove it
                 reactionRepository.delete(existingReaction);
             } else {
+                // If different reaction, update it
                 existingReaction.setReactionType(reactionType);
                 reactionRepository.save(existingReaction);
-                
-                // Create notification for updated reaction
-                notificationService.createNotification(
-                    post.getUser().getId(),
-                    userId,
-                    postId,
-                    PostNotification.NotificationType.REACTION,
-                    reactionType.toString()
-                );
+                shouldNotify = true;
             }
         } else {
+            // Create new reaction
             PostReaction newReaction = PostReaction.builder()
                 .post(post)
                 .user(user)
                 .reactionType(reactionType)
                 .build();
             reactionRepository.save(newReaction);
-            
-            // Create notification for new reaction
+            shouldNotify = true;
+        }
+        
+        // Send notification for new or changed reactions
+        if (shouldNotify && !post.getUser().getId().equals(userId)) {
             notificationService.createNotification(
-                post.getUser().getId(),
-                userId,
+                post.getUser().getId(),  // recipient (post owner)
+                userId,                  // user who reacted
                 postId,
                 PostNotification.NotificationType.REACTION,
                 reactionType.toString()
             );
         }
         
-        return convertToDTO(postRepository.findById(postId).orElseThrow(), userId);
+        return mapToDTO(postRepository.findById(postId).orElseThrow());
+    }
+
+    private CommunityPost validateAndGetPost(Long postId) {
+        return postRepository.findById(postId)
+            .orElseThrow(() -> new RuntimeException(ERROR_POST_NOT_FOUND));
     }
 
     @Transactional
@@ -314,6 +316,17 @@ public class CommunityPostService {
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
                 .isOwner(post.getUser().getId().equals(currentUserId))
+                .build();
+    }
+
+    private CommunityPostDTO mapToDTO(CommunityPost post) {
+        return CommunityPostDTO.builder()
+                .id(post.getId())
+                .userId(post.getUser().getId())
+                .content(post.getContent())
+                .isPrivate(post.isPrivate())
+                .createdAt(post.getCreatedAt())
+                .updatedAt(post.getUpdatedAt())
                 .build();
     }
 }

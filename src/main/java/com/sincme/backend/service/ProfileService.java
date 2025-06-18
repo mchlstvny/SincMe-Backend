@@ -91,13 +91,13 @@ public class ProfileService {
         // Create profile with default values
         Profile profile = Profile.builder()
             .user(user)
-            .name(user.getFirstName() + " " + user.getLastName())  // Use user's name
+            .name("Username")  // Use default username
             .status(Profile.Status.TENANG)  // Default status
             .build();
 
         // Save and return as DTO
         return ProfileDTO.fromEntity(profileRepository.save(profile));
-    }    private Profile.Status validateStatus(Profile.Status status) {
+    }private Profile.Status validateStatus(Profile.Status status) {
         if (status == null) {
             return Profile.Status.TENANG;
         }

@@ -48,25 +48,25 @@ public class PostNotification {
     @JoinColumn(name = "recipient_id", nullable = false)
     private User recipient; // User who will receive the notification (post owner)
 
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String message;
-
-    @Column(name = "additional_info")
-    private String additionalInfo; // For storing reaction type
-
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private NotificationType type;
 
+    @Column(name = "additional_info")
+    private String additionalInfo;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String message;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "read", nullable = false)
-    private boolean read;
+    @Column(name = "is_read", nullable = false)
+    private boolean isRead;
 
     @PrePersist
     public void prePersist() {
-        this.createdAt = LocalDateTime.now();
-        this.read = false;
+        createdAt = LocalDateTime.now();
+        isRead = false;
     }
 }
